@@ -18,6 +18,7 @@ func GetRandomIVIndex() int {
 	return rand.Intn(lengthIVs)
 }
 
+// read from file
 func readLineFromFile(filename string, lineNumber int) (string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
