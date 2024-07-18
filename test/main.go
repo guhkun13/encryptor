@@ -7,9 +7,9 @@ import (
 )
 
 func main() {
-	keyComb := "env/local/guhkun-1-6"
+	keyComb := "143-56"
 
-	encodedText := "AAAAAAAAAAAAAAAAAAAAAK1VyBpYTtDitwctdyRN4Ud4vhn+z4XZLjj5Ced7JZb5"
+	encodedText := "AAAAAAAAAAAAAAAAAAAAAPUcnhdqRNurAunESPPD5NqiUaVOmStq5o6WcA9j+m6d"
 	plainText, err := encryptor.DecryptByKeyCombination(keyComb, encodedText)
 	if err != nil {
 		fmt.Errorf("failed to decrypt : %v", err.Error())

@@ -29,7 +29,6 @@ var keyFile = KeyFile{
 func main() {
 	// Define command-line flags for secret file path
 	secretFilePath := flag.String("input", "", "Path to the secret file")
-	keyDirPath := flag.String("keyDir", "", "Path to the key directory. can be version")
 	flag.Parse()
 
 	// Check if the secret file path is provided
@@ -39,21 +38,15 @@ func main() {
 		return
 	}
 
-	if *keyDirPath == "" {
-		fmt.Println("Error: key dir path is not provided.")
-		flag.Usage()
-		return
-	}
-
-	encryptFile(secretFilePath, keyDirPath)
+	encryptFile(secretFilePath)
 
 }
 
 func getRandVal() int {
-	return rand.Intn(keyFile.Len) + 1
+	return rand.Intn(len(encryptor.SecretKeys)) + 1
 }
 
-func encryptFile(secretFilePath, keyDirPath *string) {
+func encryptFile(secretFilePath *string) {
 	// Open the secret file
 	file, err := os.Open(*secretFilePath)
 	if err != nil {
@@ -73,10 +66,8 @@ func encryptFile(secretFilePath, keyDirPath *string) {
 	idxKey := getRandVal()
 	idxIV := getRandVal()
 
-	keyFilename := fmt.Sprintf("%s/%s", *keyDirPath, keyFile.Filename)
-
-	keyVal := lib.ReadLineFromFile(keyFilename, idxKey)
-	ivValue := lib.ReadLineFromFile(keyFilename, idxIV)
+	keyVal := encryptor.SecretKeys[idxKey]
+	ivValue := encryptor.SecretKeys[idxIV]
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -97,9 +88,9 @@ func encryptFile(secretFilePath, keyDirPath *string) {
 		key := parts[0]
 		value := parts[1]
 
-		fmt.Println("plaintext value", value)
-		fmt.Println("keyVal", keyVal)
-		fmt.Println("ivVal", ivValue)
+		// fmt.Println("plaintext value", value)
+		// fmt.Println("keyVal", keyVal)
+		// fmt.Println("ivVal", ivValue)
 
 		// Encrypt the value
 		encryptedValue, err := encryptor.Encrypt([]byte(value), []byte(keyVal), []byte(ivValue))
@@ -109,8 +100,8 @@ func encryptFile(secretFilePath, keyDirPath *string) {
 		}
 
 		newVal := base64.StdEncoding.EncodeToString(encryptedValue)
-		fmt.Println("encryptedValue", encryptedValue)
-		fmt.Println("newVal", newVal)
+		// fmt.Println("encryptedValue", encryptedValue)
+		// fmt.Println("newVal", newVal)
 
 		// Write the key and encrypted value to the output file
 		_, err = outputFile.WriteString(fmt.Sprintf("%s=%s\n", key, newVal))
@@ -126,5 +117,5 @@ func encryptFile(secretFilePath, keyDirPath *string) {
 	}
 
 	fmt.Println("File successfully encrypted")
-	fmt.Printf("key combination was [%s-%d-%d] \n", *keyDirPath, idxKey, idxIV)
+	fmt.Printf("key combination was [%d-%d] (STORE THE VALUE) \n", idxKey, idxIV)
 }

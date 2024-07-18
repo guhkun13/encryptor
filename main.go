@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/guhkun13/encryptor/lib"
 )
 
 // encrypt
@@ -80,23 +78,20 @@ func DecryptByKeyCombination(keyComb string, encodedText string) (string, error)
 	fmt.Println("DecryptByKeyCombination")
 	fmt.Println("keyComb:", keyComb)
 	keyCombs := strings.Split(keyComb, "-")
-	dirPath := keyCombs[0]
-	keyIndex, err := strconv.Atoi(keyCombs[1])
+	keyIndex, err := strconv.Atoi(keyCombs[0])
 	if err != nil {
 		fmt.Errorf("failed to convert string to integer on keyIndex : %s", err.Error())
 		return "", err
 	}
 
-	ivIndex, err := strconv.Atoi(keyCombs[2])
+	ivIndex, err := strconv.Atoi(keyCombs[1])
 	if err != nil {
 		fmt.Errorf("failed to convert string to integer on ivIndex : %s", err.Error())
 		return "", err
 	}
 
-	keyFilename := fmt.Sprintf("%s/%s", dirPath, lib.KeyFilename)
-
-	keyVal := lib.ReadLineFromFile(keyFilename, keyIndex)
-	ivVal := lib.ReadLineFromFile(keyFilename, ivIndex)
+	keyVal := SecretKeys[keyIndex]
+	ivVal := SecretKeys[ivIndex]
 
 	encryptedValue, err := base64.StdEncoding.DecodeString(encodedText)
 	if err != nil {

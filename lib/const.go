@@ -2,4 +2,4 @@ package lib
 
 const KeyFilename = "keys.txt"
 
-const KeyLen = 10
+const KeyLen = 1000

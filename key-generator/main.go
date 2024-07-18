@@ -22,7 +22,7 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			outputDir := args[0]
 
-			numKeys := 10
+			numKeys := 100
 			keyLength := 16
 
 			// Generate unique keys
