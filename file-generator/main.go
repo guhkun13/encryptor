@@ -10,6 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const TypeKey = "key"
+const TypeIV = "iv"
+
 var rootCmd = &cobra.Command{
 	Use:   "keygen",
 	Short: "Generate AES keys of various lengths and save to file",
@@ -17,19 +20,27 @@ var rootCmd = &cobra.Command{
 
 func main() {
 	var generateCmd = &cobra.Command{
-		Use:   "generate [numKeys] [keyLength]",
+		Use:   "gen [keyType] [numKeys] [keyLength]",
 		Short: "Generate AES keys and save to file",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			numKeys, err := strconv.Atoi(args[0])
+			keyType := args[0]
+
+			numKeys, err := strconv.Atoi(args[1])
 			if err != nil {
 				fmt.Println("Invalid input for number of keys. Please provide a valid integer.")
 				return
 			}
 
-			keyLength, err := strconv.Atoi(args[1])
+			keyLength, err := strconv.Atoi(args[2])
 			if err != nil {
 				fmt.Println("Invalid input for key length. Please provide a valid integer.")
+				return
+			}
+
+			// Validate key type
+			if !isValidKeyType(keyType) {
+				fmt.Println("Invalid key type. Supported value are [key, iv]")
 				return
 			}
 
@@ -40,7 +51,7 @@ func main() {
 			}
 
 			// Generate unique keys
-			keys, err := generateUniqueKeys(numKeys, keyLength)
+			keys, err := generateUniqueKeys(keyType, numKeys, keyLength)
 			if err != nil {
 				fmt.Println("Error generating keys:", err)
 				return
@@ -76,12 +87,16 @@ func main() {
 	}
 }
 
-func generateUniqueKeys(numKeys int, keyLength int) ([]string, error) {
+func generateUniqueKeys(keyType string, numKeys int, keyLength int) ([]string, error) {
 	keys := make([]string, 0, numKeys)
 	keySet := make(map[string]struct{})
 
+	if keyType == TypeIV {
+		keyLength /= 2
+	}
+
 	for len(keys) < numKeys {
-		key := make([]byte, keyLength/2)
+		key := make([]byte, keyLength)
 		_, err := rand.Read(key)
 		if err != nil {
 			return nil, err
@@ -95,6 +110,15 @@ func generateUniqueKeys(numKeys int, keyLength int) ([]string, error) {
 	}
 
 	return keys, nil
+}
+
+func isValidKeyType(keyType string) bool {
+	switch keyType {
+	case TypeKey, TypeIV:
+		return true
+	default:
+		return false
+	}
 }
 
 func isValidKeyLength(keyLength int) bool {

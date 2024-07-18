@@ -1,41 +1,10 @@
 package encryptor
 
 import (
-	"bufio"
 	"crypto/aes"
 	"crypto/cipher"
 	"fmt"
-	"log/slog"
-	"math/rand"
-	"os"
 )
-
-const lengthKeys = 50
-const lengthIVs = 50
-
-func GetRandomKeyIndex() int {
-	return rand.Intn(lengthKeys)
-}
-
-func GetRandomIVIndex() int {
-	return rand.Intn(lengthIVs)
-}
-
-var (
-	encKey = []byte("4b5ff54a1bce726b8f50d7c3b1320471")
-	iv     = []byte("8f50d7c3b1320471")
-)
-
-func main() {
-
-	plainText := "guhkun"
-	chiperText, _ := Encrypt([]byte(plainText), encKey, iv)
-	slog.Info(plainText)
-	slog.Info(string(chiperText))
-
-	plainTextDec, _ := Decrypt(chiperText, encKey, iv)
-	slog.Info(string(plainTextDec))
-}
 
 // encrypt
 func Encrypt(plaintext []byte, key []byte, iv []byte) ([]byte, error) {
@@ -100,30 +69,4 @@ func unpadPKCS7(data []byte) ([]byte, error) {
 		}
 	}
 	return data[:length-unpadding], nil
-}
-
-// read from file
-func readLineFromFile(filename string, lineNumber int) (string, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	currentLine := 0
-
-	for scanner.Scan() {
-		currentLine++
-		if currentLine == lineNumber {
-			return scanner.Text(), nil
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return "", err
-	}
-
-	// If lineNumber is out of range
-	return "", fmt.Errorf("line number %d out of range", lineNumber)
 }

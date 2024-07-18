@@ -5,20 +5,42 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 
 	"github.com/guhkun13/encryptor"
 )
 
-var (
-	encryptionKey = []byte("4b5ff54a1bce726b8f50d7c3b1320471")
-	iv            = []byte("4a30d240c6ce75fb")
-)
+type GenFile struct {
+	Len      int
+	Type     string
+	Filename string
+}
+
+var keyFile = GenFile{
+	Len:      25,
+	Type:     "key",
+	Filename: "key.txt",
+}
+
+var ivFile = GenFile{
+	Len:      10,
+	Type:     "iv",
+	Filename: "iv.txt",
+}
+
+func getRandomKeyIndex() int {
+	return rand.Intn(keyFile.Len) + 1
+}
+
+func getRandomIVIndex() int {
+	return rand.Intn(ivFile.Len) + 1
+}
 
 func main() {
 	// Define command-line flags for secret file path
-	secretFilePath := flag.String("secretFilePath", "", "Path to the secret file")
+	secretFilePath := flag.String("input", "", "Path to the secret file")
 	flag.Parse()
 
 	// Check if the secret file path is provided
@@ -47,6 +69,12 @@ func main() {
 	}
 	defer outputFile.Close()
 
+	idxKey := getRandomKeyIndex()
+	idxIV := getRandomIVIndex()
+
+	ivValue := readLineFromFile(ivFile.Type, idxIV)
+	keyVal := readLineFromFile(keyFile.Type, idxKey)
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -66,8 +94,9 @@ func main() {
 		key := parts[0]
 		value := parts[1]
 
+		fmt.Println("plaintext value", value)
 		// Encrypt the value
-		encryptedValue, err := encryptor.Encrypt([]byte(value), encryptionKey, iv)
+		encryptedValue, err := encryptor.Encrypt([]byte(value), []byte(keyVal), []byte(ivValue))
 		if err != nil {
 			fmt.Printf("Error encrypting data: %v\n", err)
 			return
@@ -86,5 +115,51 @@ func main() {
 		return
 	}
 
-	fmt.Println("File successfully encrypted.")
+	fmt.Println("File successfully encrypted")
+	fmt.Printf("key combination was %d-%d", idxKey, idxIV)
+}
+
+func readLineFromFile(fileType string, lineNumberSearched int) string {
+
+	filename := keyFile.Filename
+	if fileType == ivFile.Type {
+		filename = ivFile.Filename
+	}
+	// Open the file
+	file, err := os.Open(filename)
+	if err != nil {
+		fmt.Printf("Error opening file: %v\n", err)
+		return ""
+	}
+	defer file.Close()
+
+	// Read the file line by line
+	scanner := bufio.NewScanner(file)
+	lineNumber := 1
+	var content string
+	var lineX string
+	for scanner.Scan() {
+		line := scanner.Text()
+		content += line + "\n"
+
+		if lineNumber == lineNumberSearched {
+			lineX = line
+		}
+		lineNumber++
+	}
+
+	if lineNumberSearched > lineNumber {
+		fmt.Printf("Error: File has only %d lines, unable to read line %d\n", lineNumber-1, lineNumberSearched)
+		return ""
+	}
+
+	// Output the entire file content and the specific line x
+	fmt.Printf("Line %d: %s\n", lineNumberSearched, lineX)
+
+	if err := scanner.Err(); err != nil {
+		fmt.Printf("Error reading file: %v\n", err)
+		return ""
+	}
+
+	return content
 }
