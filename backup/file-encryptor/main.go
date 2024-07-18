@@ -16,14 +16,30 @@ import (
 // Set the output file path
 const outputFilePath = ".secret.encrypted.env"
 
-type KeyFile struct {
+type GenFile struct {
 	Len      int
+	Type     string
 	Filename string
 }
 
-var keyFile = KeyFile{
+var keyFile = GenFile{
 	Len:      lib.KeyLen,
+	Type:     "key",
 	Filename: lib.KeyFilename,
+}
+
+var ivFile = GenFile{
+	Len:      lib.KeyLen,
+	Type:     "iv",
+	Filename: lib.IVFilename,
+}
+
+func getRandomKeyIndex() int {
+	return rand.Intn(keyFile.Len) + 1
+}
+
+func getRandomIVIndex() int {
+	return rand.Intn(ivFile.Len) + 1
 }
 
 func main() {
@@ -49,10 +65,6 @@ func main() {
 
 }
 
-func getRandVal() int {
-	return rand.Intn(keyFile.Len) + 1
-}
-
 func encryptFile(secretFilePath, keyDirPath *string) {
 	// Open the secret file
 	file, err := os.Open(*secretFilePath)
@@ -70,13 +82,14 @@ func encryptFile(secretFilePath, keyDirPath *string) {
 	}
 	defer outputFile.Close()
 
-	idxKey := getRandVal()
-	idxIV := getRandVal()
+	idxKey := getRandomKeyIndex()
+	idxIV := getRandomIVIndex()
 
+	ivFilename := fmt.Sprintf("%s/%s", *keyDirPath, ivFile.Filename)
 	keyFilename := fmt.Sprintf("%s/%s", *keyDirPath, keyFile.Filename)
 
+	ivValue := lib.ReadLineFromFile(ivFilename, idxIV)
 	keyVal := lib.ReadLineFromFile(keyFilename, idxKey)
-	ivValue := lib.ReadLineFromFile(keyFilename, idxIV)
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {

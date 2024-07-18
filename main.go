@@ -3,7 +3,12 @@ package encryptor
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"encoding/base64"
 	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/guhkun13/encryptor/lib"
 )
 
 // encrypt
@@ -69,4 +74,42 @@ func unpadPKCS7(data []byte) ([]byte, error) {
 		}
 	}
 	return data[:length-unpadding], nil
+}
+
+func DecryptByKeyCombination(keyComb string, encodedText string) (string, error) {
+	fmt.Println("DecryptByKeyCombination")
+	fmt.Println("keyComb:", keyComb)
+	keyCombs := strings.Split(keyComb, "-")
+	dirPath := keyCombs[0]
+	keyIndex, err := strconv.Atoi(keyCombs[1])
+	if err != nil {
+		fmt.Errorf("failed to convert string to integer on keyIndex : %s", err.Error())
+		return "", err
+	}
+
+	ivIndex, err := strconv.Atoi(keyCombs[2])
+	if err != nil {
+		fmt.Errorf("failed to convert string to integer on ivIndex : %s", err.Error())
+		return "", err
+	}
+
+	keyFilename := fmt.Sprintf("%s/%s", dirPath, lib.KeyFilename)
+
+	keyVal := lib.ReadLineFromFile(keyFilename, keyIndex)
+	ivVal := lib.ReadLineFromFile(keyFilename, ivIndex)
+
+	encryptedValue, err := base64.StdEncoding.DecodeString(encodedText)
+	if err != nil {
+		fmt.Errorf("failed to StdEncoding.DecodeString : %s", err.Error())
+		return "", err
+	}
+
+	plainText, err := Decrypt(encryptedValue, []byte(keyVal), []byte(ivVal))
+	if err != nil {
+		fmt.Println("error cuk")
+		fmt.Println(err.Error())
+		return "", err
+	}
+
+	return string(plainText), nil
 }

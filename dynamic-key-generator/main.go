@@ -5,9 +5,13 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/spf13/cobra"
 )
+
+const TypeKey = "key"
+const TypeIV = "iv"
 
 var rootCmd = &cobra.Command{
 	Use:   "keygen",
@@ -16,29 +20,50 @@ var rootCmd = &cobra.Command{
 
 func main() {
 	var generateCmd = &cobra.Command{
-		Use:   "gen [outputDir]",
+		Use:   "gen [keyType] [numKeys] [keyLength]",
 		Short: "Generate AES keys and save to file",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(3),
 		Run: func(cmd *cobra.Command, args []string) {
-			outputDir := args[0]
+			keyType := args[0]
 
-			numKeys := 10
-			keyLength := 16
+			numKeys, err := strconv.Atoi(args[1])
+			if err != nil {
+				fmt.Println("Invalid input for number of keys. Please provide a valid integer.")
+				return
+			}
+
+			keyLength, err := strconv.Atoi(args[2])
+			if err != nil {
+				fmt.Println("Invalid input for key length. Please provide a valid integer.")
+				return
+			}
+
+			// Validate key type
+			if !isValidKeyType(keyType) {
+				fmt.Println("Invalid key type. Supported value are [key, iv]")
+				return
+			}
+
+			// Validate key length
+			if !isValidKeyLength(keyLength) {
+				fmt.Println("Invalid key length. Supported lengths are 16 (AES-128), 24 (AES-192), or 32 (AES-256) bytes.")
+				return
+			}
 
 			// Generate unique keys
-			keys, err := generateUniqueKeys(numKeys, keyLength)
+			keys, err := generateUniqueKeys(keyType, numKeys, keyLength)
 			if err != nil {
 				fmt.Println("Error generating keys:", err)
 				return
 			}
 
-			if outputDir == "" {
+			outputFile, _ := cmd.Flags().GetString("output")
+			if outputFile == "" {
 				fmt.Println("Output file name not provided. Use --output flag to specify the file name.")
 				return
 			}
 
 			// Save keys to file
-			outputFile := outputDir + "/keys.txt"
 			if err := saveKeysToFile(outputFile, keys); err != nil {
 				fmt.Println("Error saving keys to file:", err)
 				return
@@ -47,6 +72,9 @@ func main() {
 			fmt.Printf("Generated %d unique keys of length %d bytes and saved to %s\n", numKeys, keyLength, outputFile)
 		},
 	}
+
+	// Add flag for output file
+	generateCmd.Flags().StringP("output", "o", "keys.txt", "Output file name to save generated keys")
 
 	// Add generateCmd to root command
 	rootCmd.AddCommand(generateCmd)
@@ -58,11 +86,13 @@ func main() {
 	}
 }
 
-func generateUniqueKeys(numKeys int, keyLength int) ([]string, error) {
+func generateUniqueKeys(keyType string, numKeys int, keyLength int) ([]string, error) {
 	keys := make([]string, 0, numKeys)
 	keySet := make(map[string]struct{})
 
+	// if keyType == TypeIV {
 	keyLength /= 2
+	// }
 
 	for len(keys) < numKeys {
 		key := make([]byte, keyLength)
@@ -79,6 +109,24 @@ func generateUniqueKeys(numKeys int, keyLength int) ([]string, error) {
 	}
 
 	return keys, nil
+}
+
+func isValidKeyType(keyType string) bool {
+	switch keyType {
+	case TypeKey, TypeIV:
+		return true
+	default:
+		return false
+	}
+}
+
+func isValidKeyLength(keyLength int) bool {
+	switch keyLength {
+	case 16, 24, 32:
+		return true
+	default:
+		return false
+	}
 }
 
 // saveKeysToFile saves keys into a text file line by line.
