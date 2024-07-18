@@ -5,12 +5,16 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"os"
 	"strings"
 
 	"github.com/guhkun13/encryptor"
 )
+
+// Set the output file path
+const outputFilePath = ".secret.encrypted.env"
 
 type GenFile struct {
 	Len      int
@@ -41,6 +45,7 @@ func getRandomIVIndex() int {
 func main() {
 	// Define command-line flags for secret file path
 	secretFilePath := flag.String("input", "", "Path to the secret file")
+	keyDirPath := flag.String("keyDir", "", "Path to the key directory. can be version")
 	flag.Parse()
 
 	// Check if the secret file path is provided
@@ -50,9 +55,17 @@ func main() {
 		return
 	}
 
-	// Set the output file path
-	outputFilePath := ".secret.encrypted.env"
+	if *keyDirPath == "" {
+		fmt.Println("Error: key dir path is not provided.")
+		flag.Usage()
+		return
+	}
 
+	encryptFile(secretFilePath, keyDirPath)
+
+}
+
+func encryptFile(secretFilePath, keyDirPath *string) {
 	// Open the secret file
 	file, err := os.Open(*secretFilePath)
 	if err != nil {
@@ -72,8 +85,8 @@ func main() {
 	idxKey := getRandomKeyIndex()
 	idxIV := getRandomIVIndex()
 
-	ivValue := readLineFromFile(ivFile.Type, idxIV)
-	keyVal := readLineFromFile(keyFile.Type, idxKey)
+	ivValue := readLineFromFile(*keyDirPath, ivFile.Type, idxIV)
+	keyVal := readLineFromFile(*keyDirPath, keyFile.Type, idxKey)
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -119,14 +132,24 @@ func main() {
 	}
 
 	fmt.Println("File successfully encrypted")
-	fmt.Printf("key combination was %d-%d", idxKey, idxIV)
+	fmt.Printf("key combination was [%s-%d-%d] \n", *keyDirPath, idxKey, idxIV)
 }
 
-func readLineFromFile(fileType string, lineNumberSearched int) string {
+func readLineFromFile(keyDirPath string, fileType string, lineNumberSearched int) string {
+	slog.Info("readLineFromFile")
+
+	slog.Info("param",
+		slog.String("keyDirPath", keyDirPath),
+		slog.String("fileType", fileType),
+		slog.Int("lineNumberSearched", lineNumberSearched),
+	)
+
 	filename := keyFile.Filename
 	if fileType == ivFile.Type {
 		filename = ivFile.Filename
 	}
+	filename = fmt.Sprintf("%s/%s", keyDirPath, filename)
+
 	// Open the file
 	file, err := os.Open(filename)
 	if err != nil {
