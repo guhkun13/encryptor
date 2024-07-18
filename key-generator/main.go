@@ -57,13 +57,11 @@ func main() {
 				return
 			}
 
-			outputFile := keyType + ".txt"
-			// outputFile, _ := cmd.Flags().GetString("output")
-			// if outputFile == "" {
-			// 	fmt.Println("Output file name not provided. Use --output flag to specify the file name.")
-
-			// 	return
-			// }
+			outputFile, _ := cmd.Flags().GetString("output")
+			if outputFile == "" {
+				fmt.Println("Output file name not provided. Use --output flag to specify the file name.")
+				return
+			}
 
 			// Save keys to file
 			if err := saveKeysToFile(outputFile, keys); err != nil {
@@ -76,7 +74,7 @@ func main() {
 	}
 
 	// Add flag for output file
-	// generateCmd.Flags().StringP("output", "o", "keys.txt", "Output file name to save generated keys")
+	generateCmd.Flags().StringP("output", "o", "keys.txt", "Output file name to save generated keys")
 
 	// Add generateCmd to root command
 	rootCmd.AddCommand(generateCmd)

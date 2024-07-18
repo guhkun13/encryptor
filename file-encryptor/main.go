@@ -19,7 +19,7 @@ type GenFile struct {
 }
 
 var keyFile = GenFile{
-	Len:      25,
+	Len:      30,
 	Type:     "key",
 	Filename: "key.txt",
 }
