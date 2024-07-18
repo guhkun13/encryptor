@@ -95,6 +95,9 @@ func main() {
 		value := parts[1]
 
 		fmt.Println("plaintext value", value)
+		fmt.Println("keyVal", keyVal)
+		fmt.Println("ivVal", ivValue)
+
 		// Encrypt the value
 		encryptedValue, err := encryptor.Encrypt([]byte(value), []byte(keyVal), []byte(ivValue))
 		if err != nil {
@@ -120,7 +123,6 @@ func main() {
 }
 
 func readLineFromFile(fileType string, lineNumberSearched int) string {
-
 	filename := keyFile.Filename
 	if fileType == ivFile.Type {
 		filename = ivFile.Filename
@@ -136,30 +138,16 @@ func readLineFromFile(fileType string, lineNumberSearched int) string {
 	// Read the file line by line
 	scanner := bufio.NewScanner(file)
 	lineNumber := 1
-	var content string
 	var lineX string
 	for scanner.Scan() {
 		line := scanner.Text()
-		content += line + "\n"
 
 		if lineNumber == lineNumberSearched {
 			lineX = line
+			return lineX
 		}
 		lineNumber++
 	}
 
-	if lineNumberSearched > lineNumber {
-		fmt.Printf("Error: File has only %d lines, unable to read line %d\n", lineNumber-1, lineNumberSearched)
-		return ""
-	}
-
-	// Output the entire file content and the specific line x
-	fmt.Printf("Line %d: %s\n", lineNumberSearched, lineX)
-
-	if err := scanner.Err(); err != nil {
-		fmt.Printf("Error reading file: %v\n", err)
-		return ""
-	}
-
-	return content
+	return ""
 }

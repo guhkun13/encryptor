@@ -22,7 +22,7 @@ func main() {
 	var generateCmd = &cobra.Command{
 		Use:   "gen [keyType] [numKeys] [keyLength]",
 		Short: "Generate AES keys and save to file",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		Run: func(cmd *cobra.Command, args []string) {
 			keyType := args[0]
 
@@ -57,12 +57,13 @@ func main() {
 				return
 			}
 
-			// Output file name flag (default: keys.txt)
-			outputFile, _ := cmd.Flags().GetString("output")
-			if outputFile == "" {
-				fmt.Println("Output file name not provided. Use --output flag to specify the file name.")
-				return
-			}
+			outputFile := keyType + ".txt"
+			// outputFile, _ := cmd.Flags().GetString("output")
+			// if outputFile == "" {
+			// 	fmt.Println("Output file name not provided. Use --output flag to specify the file name.")
+
+			// 	return
+			// }
 
 			// Save keys to file
 			if err := saveKeysToFile(outputFile, keys); err != nil {
@@ -75,7 +76,7 @@ func main() {
 	}
 
 	// Add flag for output file
-	generateCmd.Flags().StringP("output", "o", "keys.txt", "Output file name to save generated keys")
+	// generateCmd.Flags().StringP("output", "o", "keys.txt", "Output file name to save generated keys")
 
 	// Add generateCmd to root command
 	rootCmd.AddCommand(generateCmd)
@@ -91,9 +92,9 @@ func generateUniqueKeys(keyType string, numKeys int, keyLength int) ([]string, e
 	keys := make([]string, 0, numKeys)
 	keySet := make(map[string]struct{})
 
-	if keyType == TypeIV {
-		keyLength /= 2
-	}
+	// if keyType == TypeIV {
+	keyLength /= 2
+	// }
 
 	for len(keys) < numKeys {
 		key := make([]byte, keyLength)
