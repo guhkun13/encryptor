@@ -88,20 +88,16 @@ func encryptFile(secretFilePath *string) {
 		key := parts[0]
 		value := parts[1]
 
-		// fmt.Println("plaintext value", value)
-		// fmt.Println("keyVal", keyVal)
-		// fmt.Println("ivVal", ivValue)
-
 		// Encrypt the value
 		encryptedValue, err := encryptor.Encrypt([]byte(value), []byte(keyVal), []byte(ivValue))
 		if err != nil {
 			fmt.Printf("Error encrypting data: %v\n", err)
 			return
 		}
+		delim := lib.EncodingDelimiter
 
 		newVal := base64.StdEncoding.EncodeToString(encryptedValue)
-		// fmt.Println("encryptedValue", encryptedValue)
-		// fmt.Println("newVal", newVal)
+		newVal = fmt.Sprintf("%d%s%s%s%d", idxKey, delim, newVal, delim, idxIV)
 
 		// Write the key and encrypted value to the output file
 		_, err = outputFile.WriteString(fmt.Sprintf("%s=%s\n", key, newVal))
@@ -117,5 +113,5 @@ func encryptFile(secretFilePath *string) {
 	}
 
 	fmt.Println("File successfully encrypted")
-	fmt.Printf("key combination was [%d-%d] (STORE THE VALUE) \n", idxKey, idxIV)
+	fmt.Printf("key combination was [%d-%d] \n", idxKey, idxIV)
 }

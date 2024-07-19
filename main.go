@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/guhkun13/encryptor/lib"
 )
 
 // encrypt
@@ -74,37 +76,42 @@ func unpadPKCS7(data []byte) ([]byte, error) {
 	return data[:length-unpadding], nil
 }
 
-func DecryptByKeyCombination(keyComb string, encodedText string) (string, error) {
-	fmt.Println("DecryptByKeyCombination")
-	fmt.Println("keyComb:", keyComb)
-	keyCombs := strings.Split(keyComb, "-")
-	keyIndex, err := strconv.Atoi(keyCombs[0])
-	if err != nil {
-		fmt.Errorf("failed to convert string to integer on keyIndex : %s", err.Error())
-		return "", err
-	}
+func decomposeSecret(secretKey string) (keyIdx, ivIdx int, encText string) {
+	temp := strings.Split(secretKey, lib.EncodingDelimiter)
+	keyIdx, _ = strconv.Atoi(temp[0])
+	ivIdx, _ = strconv.Atoi(temp[2])
+	encText = temp[1]
 
-	ivIndex, err := strconv.Atoi(keyCombs[1])
-	if err != nil {
-		fmt.Errorf("failed to convert string to integer on ivIndex : %s", err.Error())
-		return "", err
-	}
+	return
+}
 
+func DecryptByKeyCombination(secretKey string) (string, error) {
+	// fmt.Println("DecryptByKeyCombination")
+	// fmt.Println("secretKey = ", secretKey)
+
+	keyIndex, ivIndex, encodedText := decomposeSecret(secretKey)
 	keyVal := SecretKeys[keyIndex]
 	ivVal := SecretKeys[ivIndex]
 
+	// fmt.Println("keyIndex = ", keyIndex)
+	// fmt.Println("ivIndex = ", ivIndex)
+	// fmt.Println("keyVal = ", keyVal)
+	// fmt.Println("ivVal = ", ivVal)
+	// fmt.Println("encodedText = ", encodedText)
+
 	encryptedValue, err := base64.StdEncoding.DecodeString(encodedText)
 	if err != nil {
-		fmt.Errorf("failed to StdEncoding.DecodeString : %s", err.Error())
+		fmt.Println("failed to StdEncoding.DecodeString ", err.Error())
 		return "", err
 	}
+	// fmt.Println("encryptedValue", encryptedValue)
 
 	plainText, err := Decrypt(encryptedValue, []byte(keyVal), []byte(ivVal))
 	if err != nil {
-		fmt.Println("error cuk")
-		fmt.Println(err.Error())
+		fmt.Println("error brow", err.Error())
 		return "", err
 	}
+	// fmt.Println("plainText", plainText)
 
 	return string(plainText), nil
 }
